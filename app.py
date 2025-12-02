@@ -6,6 +6,7 @@ import numpy as np
 from datetime import datetime, timedelta
 import base64
 from io import BytesIO
+import time  # ADD THIS LINE - WAS MISSING!
 
 # Create a base64 encoded logo to avoid file dependencies
 def get_base64_logo():
@@ -140,6 +141,10 @@ if 'generated_content' not in st.session_state:
     st.session_state.generated_content = None
 if 'selected_opportunity' not in st.session_state:
     st.session_state.selected_opportunity = None
+if 'trends' not in st.session_state:
+    st.session_state.trends = None
+if 'opportunities' not in st.session_state:
+    st.session_state.opportunities = None
 
 # Sample data generators
 def generate_trends():
@@ -235,6 +240,28 @@ CALL TO ACTION (45-60s): [Clear text overlay] "3 steps to get started today..." 
         'hashtags': ['#AI', '#Tech', '#Innovation', '#Business', '#Future', f"#{opportunity['trend'].replace(' ', '')}"]
     }
 
+# Pipeline function
+def run_pipeline():
+    """Run the complete Chronos pipeline"""
+    # Step 1: Monitoring
+    with st.spinner("🕵️ **Monitoring digital landscape...**"):
+        time.sleep(1.5)
+        st.session_state.trends = generate_trends()
+    
+    # Step 2: Discovery
+    with st.spinner("🧠 **Analyzing opportunities...**"):
+        time.sleep(1.5)
+        st.session_state.opportunities = generate_opportunities(st.session_state.trends)
+        st.session_state.selected_opportunity = st.session_state.opportunities[0]
+    
+    # Step 3: Generation
+    with st.spinner("🎨 **Generating content...**"):
+        time.sleep(2)
+        st.session_state.generated_content = generate_content(st.session_state.selected_opportunity)
+    
+    st.session_state.demo_step = 3
+    return True
+
 # Header with embedded logo
 col1, col2 = st.columns([3, 1])
 with col1:
@@ -306,21 +333,10 @@ with demo_col1:
 
 with demo_col2:
     if st.button("▶️ **Run Complete Pipeline**", use_container_width=True, type="primary"):
-        with st.spinner("🕵️ **Monitoring digital landscape...**"):
-            time.sleep(1)
-            st.session_state.trends = generate_trends()
-        
-        with st.spinner("🧠 **Analyzing opportunities...**"):
-            time.sleep(1)
-            st.session_state.opportunities = generate_opportunities(st.session_state.trends)
-            st.session_state.selected_opportunity = st.session_state.opportunities[0]
-        
-        with st.spinner("🎨 **Generating content...**"):
-            time.sleep(2)
-            st.session_state.generated_content = generate_content(st.session_state.selected_opportunity)
-        
-        st.session_state.demo_step = 3
-        st.success("✅ **Pipeline complete!** Generated multi-format content package.")
+        success = run_pipeline()
+        if success:
+            st.success("✅ **Pipeline complete!** Generated multi-format content package.")
+            st.rerun()
 
 # Pipeline Steps
 tab1, tab2, tab3, tab4 = st.tabs(["📡 **Monitor**", "🔍 **Discover**", "🎨 **Create**", "🚀 **Optimize**"])
@@ -328,10 +344,12 @@ tab1, tab2, tab3, tab4 = st.tabs(["📡 **Monitor**", "🔍 **Discover**", "🎨
 with tab1:
     st.subheader("Real-time Media Monitoring")
     
-    if st.session_state.get('trends'):
+    # Generate or use existing trends
+    if st.session_state.trends:
         trends = st.session_state.trends
     else:
         trends = generate_trends()
+        st.session_state.trends = trends
     
     col1, col2 = st.columns(2)
     
@@ -411,12 +429,20 @@ with tab1:
 with tab2:
     st.subheader("Content Opportunity Discovery")
     
+    # Button to generate opportunities
     if st.button("🔍 Analyze Current Trends", key="analyze_btn", use_container_width=True):
-        trends = generate_trends()
-        opportunities = generate_opportunities(trends)
-        st.session_state.opportunities = opportunities
-        
-    if st.session_state.get('opportunities'):
+        with st.spinner("Analyzing trends..."):
+            time.sleep(1)
+            if st.session_state.trends:
+                opportunities = generate_opportunities(st.session_state.trends)
+                st.session_state.opportunities = opportunities
+            else:
+                trends = generate_trends()
+                opportunities = generate_opportunities(trends)
+                st.session_state.opportunities = opportunities
+    
+    # Display opportunities
+    if st.session_state.opportunities:
         for i, opp in enumerate(st.session_state.opportunities):
             with st.expander(f"🎯 Opportunity #{i+1}: {opp['title']} (Score: {opp['score']}/10)", expanded=i==0):
                 col1, col2, col3, col4 = st.columns(4)
@@ -433,11 +459,13 @@ with tab2:
                     st.session_state.generated_content = generate_content(opp)
                     st.success(f"✅ Selected: {opp['title']}")
                     st.rerun()
+    else:
+        st.info("Click 'Analyze Current Trends' to discover content opportunities")
 
 with tab3:
     st.subheader("AI-Powered Content Generation")
     
-    if st.session_state.get('generated_content'):
+    if st.session_state.generated_content:
         content = st.session_state.generated_content
         
         st.markdown(f"""
@@ -512,11 +540,13 @@ with tab3:
             st.markdown("**🎬 Format:** Vertical (9:16)")
             st.markdown("**🎵 Music:** Upbeat corporate")
             st.markdown("**🎙️ Voiceover:** Professional, energetic")
+    else:
+        st.info("Run the pipeline or select an opportunity to generate content")
 
 with tab4:
     st.subheader("Distribution Optimization")
     
-    if st.session_state.get('generated_content'):
+    if st.session_state.generated_content:
         content = st.session_state.generated_content
         
         col1, col2 = st.columns(2)
@@ -585,6 +615,8 @@ with tab4:
             Hook: "How this changes your daily life..."
             </div>
             """, unsafe_allow_html=True)
+    else:
+        st.info("Generate content first to see optimization recommendations")
 
 # Technology Stack
 st.markdown("---")
@@ -664,11 +696,3 @@ st.markdown("""
 All data is simulated for demonstration purposes.</em></p>
 </div>
 """, unsafe_allow_html=True)
-
-# Add some sample data if needed
-if st.sidebar.checkbox("📊 Show Raw Data"):
-    st.sidebar.subheader("Sample Data")
-    if st.session_state.get('trends'):
-        st.sidebar.json(st.session_state.trends[:2])
-    if st.session_state.get('opportunities'):
-        st.sidebar.json(st.session_state.opportunities[:1])
