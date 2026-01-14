@@ -151,6 +151,9 @@ Think of it as a full content agency compressed into one AI system.
 This repository represents the AI-driven prototype of ContentForge.
 The long-term vision is a SaaS platform offering real-time content intelligence, automation, and analytics for modern marketing teams.
 
-Contact: [faisalmrasul13@gmail.com](mailto:faisalmrasul13@gmail.com)
-Website or pitch deck: https://faisalmrasul.github.io/inquiro-media/
+## Contact
+
+**Email:** faisalmrasul13@gmail.com
+**Website:** https://faisalmrasul.github.io/inquiro-media/
+
 
